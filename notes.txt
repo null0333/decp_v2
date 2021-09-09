@@ -1,0 +1,87 @@
+- figure out db for storing info
+- list of addresses, names for known addresses
+- use http, flask + nginx
+- run as hidden service
+- distributed ledger of members of group
+    - join request requires proof of work
+
+- group hash, needs to be signed by every member in order to be valid
+    - member list is signed by every member (signature will change if member list changes)
+    - then signatures concatenated in alphanumerical order and hashed into group hash
+        - add unique ID of group?
+
+    - on join request, group hash is regenerated
+    - the group hash provides a guarantee that every member of the group approves the join request
+        - also provides a singular, correct member list, conflicts are impossible
+    - if a bad actor wants to join the group without approval:
+        - their pubkey will not be in the member list
+
+- web server to listen
+    - just use simple requests to communicate with other
+    - decp_server needs some way of IPC to communicate with frontend
+        - https://stackoverflow.com/questions/6920858/interprocess-communication-in-python
+
+
+- need pubkeys
+- db for knownlist and groups
+- first implement messaging, then groups
+
+- different handling of initial message
+    - generate new shared secret key
+    - TODO: regenerate session key every few hours
+
+init message:
+    sender:
+        - pubkey
+        - addr
+        - DEP: sender nick
+        - session key (signed and encrypted for recp)
+        - session key signature
+    recp:
+        - accepted, true/false
+        - session key (signed and encrypted for sender)
+        - DEP: recp nick
+
+message:
+    sender:
+        - sender addr
+        - encrypted message
+            - {nonce, tag, ciphertext}
+    recp:
+        - ack
+
+then they are both added to each others known list
+
+# distribute pubkey and addr so people can "add you"
+
+use addr as unique ID but keep local nicks
+
+
+
+
+
+
+need a listening server (flask) and sending server
+use in memory db for IPC
+
+need script to set up dbs, and generate keys
+
+
+
+
+
+
+
+
+new structure:
+    - server for listening to outside requests, implement with flask
+    - server listens for local requests and sends shit to the outside, implement with posixqueue + stem
+    - script to generate configs, keys etc also for exporting pubkeys
+    - figure out simple messaging first
+        - introduction request to initiate
+            - frontend sets up local nick, db key is addr
+            - can now send requests using either addr or local nick
+            - generate shared secret
+            - shared secret can be regenerated with intro request
+    -- redis for IPC between frontend and backend
+        - replace ipcqueue ipc with redis
