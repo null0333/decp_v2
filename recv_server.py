@@ -15,6 +15,7 @@ import json
 import base64
 from flask import Flask
 from peewee import * # unclean, fix this shit
+from ipcqueue import posixmq
 
 # url routes:
 # - /<grouphash> for all group related things
@@ -52,6 +53,9 @@ class Known(BaseModel):
 db.connect()
 db.create_tables([Known])
 
+send_queue = posixmq.Queue("/decp_send_queue")
+frontend_queue = posixmq.Queue("/decp_frontend_queue")
+
 dc_operations = {"init": handle_init}
 
 # direct communication
@@ -82,6 +86,8 @@ def handle_init(request):
                          session=session_key)
     sender_known.save()
 
+    self.send_queue.put()
+
 def handle_message(request):
     sender_addr = request.json["addr"]
     enc_message = request.json["message"]
@@ -95,6 +101,7 @@ def handle_message(request):
         pkcs1_15.new(sender.pubkey).verify(SHA256.new(session_key), r.json["signature"])
     except (ValueError, TypeError):
         return -1
+
 
     return 0
 

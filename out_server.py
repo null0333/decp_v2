@@ -53,7 +53,7 @@ class decp_send_server:
         self.db.connect()
         self.db.create_tables([Known])
 
-        self.queue = posixmq.Queue("/decp_send_queue")
+        self.send_queue = posixmq.Queue("/decp_send_queue")
         self.session = requests.session()
         self.session.proxies = {"http" : "socks5://127.0.0.1:9050",
                                 "https" : "socks5://127.0.0.1:9050"}
@@ -62,7 +62,7 @@ class decp_send_server:
     def start():
         while True:
             # [operation, args]
-            op = self.queue.get(block=True)
+            op = self.send_queue.get(block=True)
             if op[0] == "send_init":
                 send_init(op[1:])
 
@@ -102,6 +102,9 @@ class decp_send_server:
 
          return -1
 
+     def send_init_response(self, args):
+         pass
+
      def send_message(self, args):
          # return 0 if no errors occured, 1otherwise
          # args: recp_addr
@@ -117,3 +120,7 @@ class decp_send_server:
          except (KeyError):
              return -1
          return 0
+
+if __name__ == "__main__":
+    send_server = decp_send_server()
+    send_server.start()
